@@ -118,7 +118,22 @@ def ocr_google_vision(file_bytes, is_pdf=False, client=None):
 def main():
     st.set_page_config(page_title="OCR Détection Documents", layout="wide")
 
-    st.image('mon_logo.png')  # ✅ Ne pas modifier selon ta demande
+    from PIL import Image, ImageChops
+
+def enlever_barres_noires(image_path):
+    img = Image.open(image_path).convert("RGB")
+    # Supprime les marges noires (très simples)
+    bg = Image.new(img.mode, img.size, img.getpixel((0, 0)))
+    diff = ImageChops.difference(img, bg)
+    bbox = diff.getbbox()
+    if bbox:
+        img_cropped = img.crop(bbox)
+        return img_cropped
+    return img
+
+# Afficher le logo nettoyé et redimensionné
+logo = enlever_barres_noires("mon_logo.png")
+st.image(logo, width=150)
 
     st.title("🔍 OCR Détection de documents officiels")
 
