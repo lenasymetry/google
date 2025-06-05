@@ -3,7 +3,7 @@ from google.oauth2 import service_account
 from google.cloud import vision
 import json
 import os
-from PIL import Image, ImageChops
+from PIL import Image
 import io
 import fitz  # PyMuPDF pour PDF
 import unicodedata
@@ -113,25 +113,17 @@ def ocr_google_vision(file_bytes, is_pdf=False, client=None):
 
     return texte_total
 
-# ------------------ 🎨 Nettoyage du logo ------------------
-
-def enlever_barres_noires(image_path):
-    img = Image.open(image_path).convert("RGB")
-    bg = Image.new(img.mode, img.size, img.getpixel((0, 0)))
-    diff = ImageChops.difference(img, bg)
-    bbox = diff.getbbox()
-    if bbox:
-        img_cropped = img.crop(bbox)
-        return img_cropped
-    return img
-
 # ------------------ 🚀 Interface Streamlit ------------------
 
 def main():
     st.set_page_config(page_title="OCR Détection Documents", layout="wide")
 
-    logo = enlever_barres_noires("mon_logo.png")
-    st.image(logo, width=150)
+    # Charger le logo pour récupérer sa largeur
+    logo = Image.open('mon_logo.png')
+    largeur_originale = logo.width
+
+    # Afficher le logo avec largeur divisée par 2
+    st.image(logo, width=largeur_originale // 2)
 
     st.title("🔍 OCR Détection de documents officiels")
 
