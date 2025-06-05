@@ -112,8 +112,7 @@ def ocr_google_vision(file_bytes, is_pdf=False):
 def main():
     st.set_page_config(page_title="OCR Détection Documents", layout="wide")
 
-    logo_path = "/Users/lenapatarin/Desktop/googleapi/mon_logo.png"
-    st.image(logo_path, width=400)
+    st.image('mon_logo.png')
 
     st.title("🔍 OCR Détection de documents officiels")
 
