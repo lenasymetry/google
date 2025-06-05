@@ -2,6 +2,13 @@ import streamlit as st
 from google.oauth2 import service_account
 from google.cloud import vision
 import json
+import os
+from PIL import Image
+import io
+import fitz  # PyMuPDF pour PDF
+import unicodedata
+
+# ------------------ 🔐 Authentification Google Vision ------------------
 
 # Charger le JSON string et le parser
 json_str = st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"]
@@ -10,15 +17,10 @@ credentials_info = json.loads(json_str)
 # Créer les credentials
 credentials = service_account.Credentials.from_service_account_info(credentials_info)
 
-# Créer le client Vision
+# Créer le client Vision (à utiliser partout)
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
-import os
-from PIL import Image
-import io
-import fitz  # PyMuPDF pour PDF
-import unicodedata
-
+# ------------------ 🧠 Fonctions d’analyse OCR ------------------
 
 EMOJI_DOC = {
     "Carte d'identité": "🪪",
@@ -29,11 +31,9 @@ EMOJI_DOC = {
 }
 
 def normalize_text(text):
-    # Enlève les accents et met en minuscule
     nfkd_form = unicodedata.normalize('NFKD', text)
     return "".join([c for c in nfkd_form if not unicodedata.combining(c)]).lower()
 
-# Fonctions de détection
 def detect_carte_id(texte):
     t = texte.lower()
     return ("république" in t or "republique" in t) and ("française" in t or "francaise" in t) and ("carte" in t or "identité" in t)
@@ -52,7 +52,7 @@ def detect_justif_domicile(texte):
         "justificatif de domicile", "adresse", "nom du titulaire", "domicile", "quittance de loyer",
         "facture", "facture d'électricité", "facture edf", "facture engie", "facture gdf",
         "facture d'eau", "suez", "veolia", "facture de gaz", "attestation d'hébergement",
-        "assurance habitation", "bail", "contrat de location", "date d’émission", "avis d'échéance", "quittance", "loyer", "loyers", "montants", "avis d'échéance", "avis d'echeance",
+        "assurance habitation", "bail", "contrat de location", "date d’émission", "avis d'échéance", "quittance", "loyer", "loyers", "montants", "avis d'echeance"
     ]
     t = texte.lower()
     return sum(1 for mot in mots if mot in t) >= 2
@@ -66,7 +66,6 @@ def detect_rib(texte):
     return sum(1 for mot in mots if mot in t) >= 2
 
 def texte_contient_nom_prenom(texte, prenom, nom):
-    # Normalise pour comparaison sans accents
     t_norm = normalize_text(texte)
     prenom_norm = normalize_text(prenom)
     nom_norm = normalize_text(nom)
@@ -91,13 +90,12 @@ def detect_type_doc(texte, options, prenom=None, nom=None):
         return "RIB"
     return None
 
-def ocr_google_vision(file_bytes, is_pdf=False):
-    client = vision.ImageAnnotatorClient()
+def ocr_google_vision(file_bytes, is_pdf=False, client=None):
     texte_total = ""
 
     if is_pdf:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
-        for page_num in range(min(1, len(doc))):  # une seule page suffit pour détection
+        for page_num in range(min(1, len(doc))):  # une seule page suffit
             page = doc.load_page(page_num)
             pix = page.get_pixmap()
             img_bytes = pix.tobytes("png")
@@ -115,10 +113,12 @@ def ocr_google_vision(file_bytes, is_pdf=False):
 
     return texte_total
 
+# ------------------ 🚀 Interface Streamlit ------------------
+
 def main():
     st.set_page_config(page_title="OCR Détection Documents", layout="wide")
 
-    st.image('mon_logo.png')
+    st.image('mon_logo.png')  # ✅ Ne pas modifier selon ta demande
 
     st.title("🔍 OCR Détection de documents officiels")
 
@@ -153,7 +153,7 @@ def main():
         for file in uploaded_files:
             file_bytes = file.read()
             is_pdf = file.type == "application/pdf"
-            texte = ocr_google_vision(file_bytes, is_pdf)
+            texte = ocr_google_vision(file_bytes, is_pdf, client)
             type_doc = detect_type_doc(texte, doc_types, prenom=prenom, nom=nom)
 
             if type_doc:
@@ -189,5 +189,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
