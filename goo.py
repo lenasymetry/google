@@ -1,10 +1,14 @@
 import streamlit as st
-import json
-from google.cloud import vision
 from google.oauth2 import service_account
+from google.cloud import vision
 
-credentials_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"])
+# Chargement manuel des credentials depuis st.secrets
+credentials_info = st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"]
+
+# Création des credentials
 credentials = service_account.Credentials.from_service_account_info(credentials_info)
+
+# Création du client Google Vision avec les credentials
 client = vision.ImageAnnotatorClient(credentials=credentials)
 
 import os
