@@ -138,8 +138,8 @@ def main():
         }
 
         st.header("🧍 Identité")
-        prenom = st.text_input("Prénom")
-        nom = st.text_input("Nom")
+        prenom = st.text_input("Prénom").strip()
+        nom = st.text_input("Nom").strip()
 
         st.header("📂 Fichiers")
         uploaded_files = st.file_uploader("Importer fichiers (PDF ou images)", type=["pdf", "jpg", "jpeg", "png"], accept_multiple_files=True)
